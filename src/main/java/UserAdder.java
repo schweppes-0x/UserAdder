@@ -11,8 +11,8 @@ import java.util.*;
 
 
 @ExtensionInfo(
-        Title = "[Private] User Adder",
-        Description = "Adds all users in room",
+        Title = "User Adder",
+        Description = "Adds all users in a room",
         Version = "1.0",
         Author = "schweppes0x"
 )
@@ -60,8 +60,8 @@ public class UserAdder extends Extension {
                     case "/info":
                         if(showInfo)
                             showInfo = !showInfo;
-                        bot.writeOutput("Info is enabled = "+showInfo+". Enabled = info about how many i added. If you want to toggle me on/off, type /info.",false);
 
+                        bot.writeOutput("Info is enabled = "+showInfo+". Enabled = info about how many i added. If you want to toggle me on/off, type /info.",false);
                         break;
                     default:
                         bot.writeOutput("Wrong command. try /on or /off", false);
