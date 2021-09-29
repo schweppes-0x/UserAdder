@@ -4,16 +4,14 @@ import gearth.extensions.parsers.HEntity;
 import gearth.extensions.parsers.HEntityType;
 import gearth.protocol.HMessage;
 import gearth.protocol.HPacket;
-
 import java.lang.*;
 import java.util.*;
-
 
 
 @ExtensionInfo(
         Title = "User Adder",
         Description = "Adds all users in a room",
-        Version = "1.0",
+        Version = "1.1",
         Author = "schweppes0x"
 )
 
@@ -21,12 +19,12 @@ public class UserAdder extends Extension {
     private boolean isOn;
     private boolean isSent;
     private boolean showInfo = true;
-    private int addedInCurrRoom = 0;
-    private int addedInTotal = 0;
 
     private Bot bot;
 
     private Set<HEntity> loadedUsers = new HashSet<>();
+    private Set<Integer> rooms = new HashSet<>();
+    private boolean visitRooms = false;
 
     public UserAdder(String[] args){
         super(args);
@@ -37,37 +35,38 @@ public class UserAdder extends Extension {
     }
 
 
-
     @Override
     protected void initExtension() {
         super.initExtension();
 
-        String infoMessage = "Hello, Use commands: /on , /off and /info. Info will be shown about friends, turn this on or off with /info";
+        String infoMessage = "Welcome, commands: /on , /off and /info";
         bot = new Bot(this, infoMessage, "schweppes0x", null);
-
 
         bot.onInput(s -> {
             try{
-                switch (s){
-                    case "/on":
+                if(!s.startsWith("/"))
+                    return;
+                s = s.replace("/", "");
+                System.out.println(s);
+                switch (s.toLowerCase()){
+                    case "on":
                         isOn = true;
-                        bot.writeOutput("You enabled me. You can start visiting rooms, i will add everybody. Turn me off with /off",false);
+                        bot.writeOutput("[!] - You enabled me.",false);
                         break;
-                    case "/off":
+                    case "off":
                         isOn = false;
-                        bot.writeOutput("You disabled me. You can turn me on again with /on",false);
+                        bot.writeOutput("[!] - You disabled me.",false);
                         break;
-                    case "/info":
-                        if(showInfo)
-                            showInfo = !showInfo;
-
-                        bot.writeOutput("Info is enabled = "+showInfo+". Enabled = info about how many i added. If you want to toggle me on/off, type /info.",false);
+                    case "info":
+                        showInfo = !showInfo;
+                        System.out.println();
+                        bot.writeOutput("[!] - Info shown: " + showInfo, false);
                         break;
                     default:
-                        bot.writeOutput("Wrong command. try /on or /off", false);
+                        bot.writeOutput("[!] - Wrong command. try /on or /off", false);
                 }
             }catch (Exception e){
-                bot.writeOutput("Error", false);
+                bot.writeOutput("[x] - Error", false);
             }
         });
 
@@ -75,7 +74,6 @@ public class UserAdder extends Extension {
             if(!isOn)
                 return;
             loadedUsers.clear();
-            addedInCurrRoom = 0;
             isSent = false;
 
         }); // Loaded room
@@ -98,14 +96,19 @@ public class UserAdder extends Extension {
 
     private void addUsers() {
         if(isOn && !isSent){
+            int total = 0;
             for (HEntity entity: loadedUsers) {
-                sendToServer(new HPacket("{out:RequestFriend}{s:\""+entity.getName()+"\"}"));
-                addedInCurrRoom++;
-                addedInTotal++;
+                if(sendToServer(new HPacket("{out:RequestFriend}{s:\""+entity.getName()+"\"}"))){
+                    total++;
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                }
             }
             isSent = true;
-            if(bot!=null && showInfo){
-                bot.writeOutput("I added "+ addedInCurrRoom+ " in this room and total since connected: " + addedInTotal, false);
+            if(showInfo){
+                sendToServer(new HPacket("{out:Whisper}{s:\"schweppes0x I have added "+ total +" users in this room. \"}{i:0}"));
             }
         }
     }
